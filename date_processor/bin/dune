@@ -1,0 +1,4 @@
+(executable
+ (public_name date_processor)
+ (name main)
+ (libraries date_processor))
