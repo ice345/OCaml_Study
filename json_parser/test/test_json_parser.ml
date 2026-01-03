@@ -126,11 +126,14 @@ let test_round_trips () =
 (* --- 3. Accessor Tests (Query) --- *)
 
 let test_accessors () =
-  let data = parse_json "{\"users\": [{\"name\": \"Alice\"}]}" in
+  let data = parse_json "{\"users\": [{\"name\": \"Alice\", \"age\": 34}, {\"name\": \"Bob\", \"age\": 20}]}" in
   
   (* 测试成功的路径 *)
-  let res = Some data |. "users" |@ 0 |. "name" in
-  Alcotest.(check (option json_t)) "extract Alice" (Some (String "Alice")) res;
+  let res_name = Some data |. "users" |@ 0 |. "name" in
+  Alcotest.(check (option json_t)) "extract Alice" (Some (String "Alice")) res_name;
+
+  let res_age = Some data |. "users" |@ 1 |. "age" in
+  Alcotest.(check (option json_t)) "extract Bob's age" (Some (Int 20)) res_age;
 
   (* 测试失败路径：Key 不存在 *)
   let res_fail = Some data |. "404" in
