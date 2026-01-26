@@ -127,7 +127,7 @@ let test_round_trips () =
 
 let test_accessors () =
   let data = parse_json "{\"users\": [{\"name\": \"Alice\", \"age\": 34}, {\"name\": \"Bob\", \"age\": 20}]}" in
-  
+
   (* 测试成功的路径 *)
   let res_name = Some data |. "users" |@ 0 |. "name" in
   Alcotest.(check (option json_t)) "extract Alice" (Some (String "Alice")) res_name;
@@ -142,6 +142,67 @@ let test_accessors () =
   (* 测试失败路径：类型错误 (对 Object 用 Index) *)
   let res_type_err = Some data |@ 0 in
   Alcotest.(check (option json_t)) "type error" None res_type_err
+
+(* --- 4. Hexadecimal Number Tests --- *)
+
+let test_hex_parsing () =
+  (* Lowercase hex *)
+  Alcotest.(check json_t) "hex lowercase 0xff" (Int 255) (parse_json "0xff");
+  Alcotest.(check json_t) "hex lowercase 0x10" (Int 16) (parse_json "0x10");
+  Alcotest.(check json_t) "hex lowercase 0x0" (Int 0) (parse_json "0x0");
+  Alcotest.(check json_t) "hex lowercase 0xa" (Int 10) (parse_json "0xa");
+
+  (* Uppercase hex *)
+  Alcotest.(check json_t) "hex uppercase 0xFF" (Int 255) (parse_json "0xFF");
+  Alcotest.(check json_t) "hex uppercase 0X10" (Int 16) (parse_json "0X10");
+
+  (* Mixed case *)
+  Alcotest.(check json_t) "hex mixed case 0xAbCd" (Int 43981) (parse_json "0xAbCd");
+  Alcotest.(check json_t) "hex mixed case 0XfF" (Int 255) (parse_json "0XfF");
+
+  (* Large hex values *)
+  Alcotest.(check json_t) "hex large value 0xDEADBEEF" (Int 3735928559) (parse_json "0xDEADBEEF");
+  Alcotest.(check json_t) "hex single digit 0x1" (Int 1) (parse_json "0x1")
+
+let test_hex_in_objects () =
+  let json_str = "{\"color\": 0xFF, \"id\": 0x42}" in
+  let result = parse_json json_str in
+  let expected = Object [("color", Int 255); ("id", Int 66)] in
+  Alcotest.(check json_t) "hex in object" expected result
+
+let test_hex_in_arrays () =
+  let json_str = "[0xFF, 0x10, 0x0]" in
+  let result = parse_json json_str in
+  let expected = Array [Int 255; Int 16; Int 0] in
+  Alcotest.(check json_t) "hex in array" expected result
+
+let test_hex_round_trip () =
+  (* Verify that hex numbers serialize to decimal and parse back correctly *)
+  let input = "{\"hex\": 0xFF}" in
+  let json1 = parse_json input in
+  let serialized = to_string json1 in
+  let json2 = parse_json serialized in
+  Alcotest.(check json_t) "hex round trip" json1 json2
+
+let test_hex_error_cases () =
+  (* Test invalid hex: no digits after 0x *)
+  (try
+    ignore (parse_json "0x");
+    Alcotest.fail "Should raise exception for 0x with no digits"
+  with Failure _ -> ());
+
+  (* Test invalid hex: non-hex characters *)
+  (try
+    ignore (parse_json "0xGHI");
+    Alcotest.fail "Should raise exception for invalid hex digits"
+  with Failure _ -> ());
+
+  (* Test hex with leading zeros *)
+  Alcotest.(check json_t) "hex with leading zeros" (Int 1) (parse_json "0x00001");
+
+  (* Test that hex and decimal are equivalent *)
+  Alcotest.(check json_t) "hex 0x10 equals decimal 16" (Int 16) (parse_json "0x10");
+  Alcotest.(check json_t) "0x10 equals 16" (parse_json "0x10") (parse_json "16")
 
 (* --- 注册所有测试 --- *)
 
@@ -160,5 +221,12 @@ let () =
     ]);
     ("Query", [
       test_case "Accessors" `Quick test_accessors;
+    ]);
+    ("Hexadecimal", [
+      test_case "Hex Parsing" `Quick test_hex_parsing;
+      test_case "Hex in Objects" `Quick test_hex_in_objects;
+      test_case "Hex in Arrays" `Quick test_hex_in_arrays;
+      test_case "Hex Round Trip" `Quick test_hex_round_trip;
+      test_case "Hex Error Cases" `Quick test_hex_error_cases;
     ]);
   ]

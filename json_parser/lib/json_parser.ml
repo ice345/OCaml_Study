@@ -35,18 +35,36 @@ type token =
 
 let string_to_list s = List.init (String.length s) (String.get s)
 
-let is_digit_or_dot c = 
+let is_digit_or_dot c =
   '0' <= c && c <= '9' || c = '.' || c = '-' || c = 'e' || c = 'E'
+
+let is_hex_digit c =
+  ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
+
+let rec lex_hex_number acc chars =
+  match chars with
+  | c :: rest when is_hex_digit c ->
+      lex_hex_number (c :: acc) rest
+  | _ ->
+      match acc with
+      | [] -> failwith "Invalid hex number: no digits after 0x"
+      | _ ->
+          let hex_str = String.of_seq (List.to_seq (List.rev acc)) in
+          let value =
+            try int_of_string ("0x" ^ hex_str)
+            with Failure _ -> failwith ("Hex number too large: 0x" ^ hex_str)
+          in
+          (IntTok value, chars)
 
 let rec lex_number acc chars =
   match chars with
   | c :: rest when is_digit_or_dot c ->
       (* If the char is digit, add it to the acc then continue *)
       lex_number (c :: acc) rest
-  | _ -> 
+  | _ ->
       (* 1. If the char is not digit then stop *)
       let num_str = String.of_seq (List.to_seq (List.rev acc)) in
-      let token = 
+      let token =
         try IntTok (int_of_string num_str)
         with Failure _ -> FloatTok (float_of_string num_str)
       in
@@ -65,6 +83,9 @@ let rec lex_string acc chars =
       lex_string (c :: acc) rest
   | [] -> failwith "Unclosed string" (* 字符串没有闭合就结束了 *)
 
+(* Helper to check if a character is 'x' or 'X' *)
+let is_hex_prefix_char c = c = 'x' || c = 'X'
+
 let rec lex chars =
   match chars with
   | [] -> []
@@ -75,12 +96,16 @@ let rec lex chars =
   | ']' :: rest -> RBracket :: lex rest
   | ':' :: rest -> Colon :: lex rest
   | ',' :: rest -> Comma :: lex rest
-  | '"' :: rest -> 
+  | '"' :: rest ->
       let (token, remaining) = lex_string [] rest in
       token :: lex remaining
   | 't' :: 'r' :: 'u' :: 'e' :: rest -> Bool true :: lex rest
   | 'f' :: 'a' :: 'l' :: 's' :: 'e' :: rest -> Bool false :: lex rest
   | 'n' :: 'u' :: 'l' :: 'l' :: rest -> Null :: lex rest
+  | '0' :: x :: rest when is_hex_prefix_char x && is_hex_digit (List.nth_opt rest 0 |> Option.value ~default:' ') ->
+      (* Hexadecimal with 0x or 0X *)
+      let (token, remaining) = lex_hex_number [] rest in
+      token :: lex remaining
   | c :: rest when is_digit_or_dot c ->
       let (token, remaining) = lex_number [] (c :: rest) in
       token :: lex remaining
