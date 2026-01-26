@@ -1,0 +1,4 @@
+(executables
+ (public_names simple_lwt simple_lwt_server)
+ (names main server)
+ (libraries json_parser lwt.unix cohttp-lwt-unix))

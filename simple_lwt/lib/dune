@@ -1,0 +1,3 @@
+(library
+ (name json_parser)
+ (public_name simple_lwt.json_parser))

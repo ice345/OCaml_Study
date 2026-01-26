@@ -1,0 +1,20 @@
+(* open Lwt.Infix 是 Lwt.bind 的别名，与 let* 配合使用 *)
+open Lwt.Syntax
+
+let input_task () =
+  let* line = Lwt_io.read_line Lwt_io.stdin in (* 异步读取一行 *)
+  let* () = Lwt_io.printl  ("You typed: " ^ line) in (* 异步打印输入内容 *)
+  Lwt.return "Input"
+
+let timeout_task () =
+  let* () = Lwt_unix.sleep 5.0 in (* 异步休眠 5 秒 *)
+  let* () = Lwt_io.printl "Timeout!" in
+  Lwt.return "Timeout"
+
+let main () =
+  (* Lwt.pick 接受一个 Promise 列表, 返回最先完成的那个 Promise 结果 *)
+  let* result = Lwt.pick [input_task (); timeout_task()] in
+  Lwt_io.printl ("Winner was: " ^ result)
+
+let () =
+  Lwt_main.run (main ())
