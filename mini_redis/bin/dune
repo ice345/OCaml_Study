@@ -1,0 +1,4 @@
+(executable
+ (public_name mini_redis)
+ (name main)
+ (libraries mini_redis lwt lwt.unix))
