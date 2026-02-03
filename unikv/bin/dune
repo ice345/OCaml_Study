@@ -1,0 +1,4 @@
+(executable
+ (public_name unikv)
+ (name main)
+ (libraries unikv lwt lwt.unix))
