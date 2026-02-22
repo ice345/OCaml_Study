@@ -1,0 +1,29 @@
+open Lwt.Syntax
+open Nano_os
+
+(* 实例化网络栈 *)
+module MyStack = Stack.Make(SocketNet)
+
+let main () =
+  let* () = Lwt_io.printl "--- Booting NanoOS Network ---" in
+  
+  (* 1. 启动网卡，绑定本地 8080 端口 *)
+  let* net = MyStack.connect "8080" in
+  let* () = Lwt_io.printl "[Kernel] Network interface up on UDP :8080" in
+
+  (* 2. 开始监听 *)
+  let* _ = MyStack.listen net (fun port msg ->
+    (* 这是应用层回调 *)
+    let* () = Lwt_io.printlf "[App] Received on port %d: '%s'" port msg in
+    
+    (* 简单的 Echo 逻辑：如果收到 "ping"，就回复 "pong" *)
+    (* 注意：目前的 SocketNet write 实现还很简陋，它可能不知道回给谁 *)
+    (* 我们先只验证“收到” *)
+    Lwt.return_unit
+  ) in
+
+  (* 保持主线程运行 *)
+  fst (Lwt.wait ())
+
+let () =
+  Lwt_main.run (main ())

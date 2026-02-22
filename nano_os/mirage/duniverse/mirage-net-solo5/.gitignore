@@ -1,0 +1,7 @@
+_build
+.*.swp
+*.native
+*.install
+*.merlin
+*.locked
+duniverse

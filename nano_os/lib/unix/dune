@@ -1,0 +1,4 @@
+(library
+ (name nano_os_unix)
+ (modules file_disk socket_net clock_unix random_unix platform_unix)
+ (libraries nano_os lwt.unix))

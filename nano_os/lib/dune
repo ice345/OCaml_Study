@@ -1,0 +1,17 @@
+(library
+ (name nano_os)
+ (public_name nano_os)
+ (modules
+  nano_os
+  block
+  ram_disk
+  fs
+  net
+  clock
+  nano_random
+  packet
+  stack
+  shell
+  unikernel
+  app)
+ (libraries lwt fmt cstruct))

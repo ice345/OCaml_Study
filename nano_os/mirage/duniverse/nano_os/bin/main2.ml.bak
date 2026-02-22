@@ -1,0 +1,40 @@
+open Lwt.Syntax
+open Nano_os
+
+(* 实例化 FS *)
+module MyFS = FS.Make(RamDisk)
+
+let main () =
+  let* () = Lwt_io.printl "--- Booting NanoOS ---" in
+  
+  let* disk = RamDisk.connect "disk0" in
+  let* fs = MyFS.connect disk in
+  
+  let* () = Lwt_io.printl "[Kernel] Formatting disk..." in
+  let* _ = MyFS.format fs in
+
+  let* () = Lwt_io.printl "[Kernel] Creating file: /boot/config" in
+  let content = "hostname=nano\nip=127.0.0.1" in
+  
+  let* res = MyFS.create_file fs "config" content in
+  let* () = 
+    match res with
+    | Ok () -> Lwt_io.printl "File created successfully."
+    (* 注意：使用 FS.pp_error *)
+    | Error e -> Fmt.failwith "Create error: %a" FS.pp_error e
+  in
+
+  let* files = MyFS.ls fs in
+  let* () = Lwt_io.printl ("[Kernel] LS: " ^ String.concat ", " files) in
+
+  let* () = Lwt_io.printl "[Kernel] Reading /boot/config..." in
+  let* read_res = MyFS.read_file fs "config" in
+  match read_res with
+  | Ok data -> 
+      let* () = Lwt_io.printl "--- File Content ---" in
+      let* () = Lwt_io.printl data in
+      Lwt_io.printl "--------------------"
+  | Error e -> Fmt.failwith "Read error: %a" FS.pp_error e
+
+let () =
+  Lwt_main.run (main ())

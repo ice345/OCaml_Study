@@ -1,0 +1,26 @@
+open Lwt.Syntax
+
+let main () =
+  let sock = Lwt_unix.socket Lwt_unix.PF_INET Lwt_unix.SOCK_DGRAM 0 in
+  let target = Lwt_unix.ADDR_INET (Unix.inet_addr_loopback, 8080) in
+  
+  (* 构造一个符合协议的包 *)
+  (* 格式: [Port (2)] [Length (2)] [Payload...] *)
+  let msg = "Hello NanoOS from Client" in
+  let msg_len = String.length msg in
+  let total_len = 4 + msg_len in
+  let buf = Cstruct.create total_len in
+  
+  (* 伪造源端口 1234 *)
+  Cstruct.LE.set_uint16 buf 0 1234; 
+  (* 写入长度 *)
+  Cstruct.LE.set_uint16 buf 2 msg_len;
+  (* 写入内容 *)
+  Cstruct.blit_from_string msg 0 buf 4 msg_len;
+  
+  let bytes = Cstruct.to_bytes buf in
+  let* _ = Lwt_unix.sendto sock bytes 0 total_len [] target in
+  Lwt_io.printl "Packet sent!"
+
+let () =
+  Lwt_main.run (main ())

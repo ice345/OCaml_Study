@@ -1,0 +1,13 @@
+(library
+ (name block)
+ (public_name mirage-block-solo5)
+ (libraries cstruct lwt mirage-block mirage-solo5 fmt)
+ (foreign_stubs
+  (language c)
+  (names solo5_block_stubs)))
+
+(rule
+ (target solo5_block_stubs.c)
+ (deps solo5_block_stubs.solo5.c solo5_block_stubs.default.c)
+ (action
+  (copy solo5_block_stubs.%{context_name}.c %{target})))

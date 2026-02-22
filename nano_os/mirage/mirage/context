@@ -1,0 +1,4 @@
+configure
+-t
+hvt
+--no-extra-repo

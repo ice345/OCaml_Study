@@ -1,0 +1,9 @@
+(executable
+ (public_name nano_os)
+ (name main)
+ (libraries nano_os nano_os_unix lwt lwt.unix cstruct fmt))
+
+(executable
+ (public_name client)
+ (name client)
+ (libraries lwt lwt.unix cstruct nano_os nano_os_unix))

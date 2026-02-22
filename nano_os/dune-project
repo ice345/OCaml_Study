@@ -1,0 +1,29 @@
+(lang dune 3.20)
+
+(name nano_os)
+
+(generate_opam_files true)
+
+(authors "Author Name <author@example.com>")
+
+(maintainers "Maintainer Name <maintainer@example.com>")
+
+(license LICENSE)
+
+(documentation https://url/to/documentation)
+
+(package
+ (name nano_os)
+ (synopsis "A short synopsis")
+ (description "A longer description")
+ (depends
+  ocaml
+  (dune (>= 2.9))
+  (lwt (>= 5.3))
+  (cstruct (>= 6.0))
+  (fmt (>= 0.9))
+  (alcotest :with-test))
+ (tags
+  ("add topics" "to describe" your project)))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

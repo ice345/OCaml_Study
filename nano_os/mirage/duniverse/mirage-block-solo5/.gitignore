@@ -1,0 +1,10 @@
+_build/
+*.merlin
+*.install
+configure
+config.mk
+configure.cmi
+configure.cmx
+configure.o
+duniverse
+*.locked
