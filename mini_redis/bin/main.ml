@@ -33,7 +33,7 @@ let store = Store.create ()
 let rec handle_loop ic oc accum_buffer =
   match Mini_redis.handle_request store accum_buffer with
   | Ok (response, rest) ->
-      (** 
+      (* 
         A complete RESP command was successfully decoded.
 
         - [response] is the encoded RESP reply to be sent back
@@ -49,7 +49,7 @@ let rec handle_loop ic oc accum_buffer =
       handle_loop ic oc rest
 
   | Error "Empty buffer" ->
-      (** 
+      (* 
         The buffer is empty or fully consumed.
 
         No further processing is possible without reading new data
@@ -58,7 +58,7 @@ let rec handle_loop ic oc accum_buffer =
       read_more ic oc accum_buffer
 
   | Error msg when String.sub msg 0 10 = "Incomplete" ->
-      (** 
+      (* 
         The buffer contains a prefix of a valid RESP message, but
         not enough bytes to complete it.
 
@@ -71,7 +71,7 @@ let rec handle_loop ic oc accum_buffer =
       read_more ic oc accum_buffer
 
   | Error msg ->
-      (** 
+      (* 
         A fatal protocol error occurred.
 
         This indicates malformed RESP input rather than an incomplete
@@ -91,11 +91,11 @@ and read_more ic oc old_buffer =
   let temp_buf = Bytes.create 1024 in
   let* len = Lwt_io.read_into ic temp_buf 0 1024 in
   if len = 0 then
-    (** Client has closed the connection *)
+    (* Client has closed the connection *)
     Lwt_io.printl "Client disconnected"
   else
     let new_data = Bytes.sub_string temp_buf 0 len in
-    (** 
+    (* 
       Append newly read data to the existing buffer and resume
       processing. This preserves unconsumed bytes across reads.
     *)
@@ -126,7 +126,7 @@ let start_server port =
     Lwt_io.establish_server_with_client_address addr accept_connection
   in
   let* () = Lwt_io.printlf "Redis server started on port %d" port in
-  (** Block forever *)
+  (* Block forever *)
   fst (Lwt.wait ())
 
 (** Program entry point *)
